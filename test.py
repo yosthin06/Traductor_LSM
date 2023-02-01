@@ -30,7 +30,7 @@ colors = [(245,117,16), (117,245,16), (16,117,245)]
 sequence = []
 sentence = []
 predictions = []
-threshold = 0.6
+threshold = 0.4
 
 cap = cv2.VideoCapture(0)
 # Set mediapipe model 
@@ -39,22 +39,24 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
 
         # Read feed
         ret, frame = cap.read()
-        
+
         # Make detections
         image, results = utils.mediapipe_detection(frame, holistic)
         #print(results)
         
         # Draw landmarks
-        utils.draw_styled_landmarks(image, results)
+        utils.draw_styled_landmarks(image, results,  mp_drawing, mp_holistic)
         
         # 2. Prediction logic
         keypoints = utils.extract_keypoints(results)
+        #print("Keypoints: ".format(keypoints))
         sequence.append(keypoints)
+        #print("Sequence: {}".format(sequence))
         sequence = sequence[-30:]
         
         if len(sequence) == 30:
             res = model.predict(np.expand_dims(sequence, axis=0))[0]
-            print(actions[np.argmax(res)])
+            print("res: {}".format(res))
             predictions.append(np.argmax(res))
             
             
@@ -72,7 +74,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
                 sentence = sentence[-5:]
 
             # Viz probabilities
-            #image = prob_viz(res, actions, image, colors)
+            #image = utils.prob_viz(res, actions, image, colors)
             
         cv2.rectangle(image, (0,0), (640, 40), (245, 117, 16), -1)
         cv2.putText(image, ' '.join(sentence), (3,30), 
@@ -82,7 +84,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         cv2.imshow('OpenCV Feed', image)
 
         # Break gracefully
-        if cv2.waitKey(10) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     cap.release()
     cv2.destroyAllWindows()

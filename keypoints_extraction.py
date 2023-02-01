@@ -85,9 +85,9 @@ for action in actions:
                     
                     # NEW Export keypoints
                     keypoints = utils.extract_keypoints(results)
+                    print("keypoints: {}".format(keypoints.shape))
                     npy_path = os.path.join(DATA_PATH, action, str(sequence), str(frame_num-start_folder))
                     np.save(npy_path, keypoints)
-                    #print("hola") if 59 >= 59 else print("")
                     start_folder = frame_num+1 if frame_num >= (start_folder+sequence_length-1) else start_folder
                     # Break gracefully
                     if cv2.waitKey(1) & 0xFF == ord('q'):

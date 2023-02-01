@@ -19,6 +19,8 @@ import time
 
 parser = argparse.ArgumentParser(description='Enter the arguments')
 parser.add_argument('--epochs', type=int, help='epochs for training')
+parser.add_argument('--test_size', type=float, help='test size')
+parser.add_argument('--train', type=bool, help='retrain model')
 
 args = parser.parse_args()
 
@@ -59,15 +61,17 @@ for action in actions:
 
 X = np.array(sequences)
 y = to_categorical(labels).astype(int)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10, shuffle=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=args.test_size, shuffle=True, stratify=y)
+print("x_train: {}".format(X_train))
+print("y_train: {}".format(y_train))
+
+print("x_test: {}".format(X_test))
+print("y_test: {}".format(y_test))
+
 log_dir = os.path.join('Logs')
 tb_callback = TensorBoard(log_dir=log_dir)
 
 start = time.time()
-model = utils.model_creation(actions, X_train, y_train, tb_callback, X_test, y_test, sequence_length, epochs=args.epochs)
+model = utils.model_creation(actions, X_train, y_train, tb_callback, X_test, y_test, sequence_length, epochs=args.epochs, train=args.train)
 print("model time: {}".format(time.time()-start))
 
-#save_model(model, 'model.pbtxt')
-#converter = tensorflow.lite.TFLiteConverter.from_keras_model(model=model)
-#model_tflite = converter.convert()
-#open("Traductor_LSM.tflite","wb").write(model_tflite)

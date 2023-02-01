@@ -1,16 +1,10 @@
 import cv2
 import numpy as np
 import os
-from matplotlib import pyplot as plt
-import time
-import mediapipe as mp
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.models import Sequential
+import tensorflow
+from tensorflow.keras.models import *
 from tensorflow.keras.layers import LSTM, Dense
-from tensorflow.keras.callbacks import TensorBoard
 from sklearn.metrics import multilabel_confusion_matrix, accuracy_score
-from scipy import stats
 
 def mediapipe_detection(image, model):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # COLOR CONVERSION BGR 2 RGB
@@ -63,35 +57,51 @@ def prob_viz(res, actions, input_frame, colors):
         
     return output_frame
 
-def model_creation(actions, X_train, y_train, tb_callback, X_test, y_test, sequence_length, epochs):
-    model = Sequential()
-    model.add(LSTM(64, return_sequences=True, activation='relu', input_shape=(sequence_length,1662)))
-    model.add(LSTM(128, return_sequences=True, activation='relu'))
-    model.add(LSTM(64, return_sequences=False, activation='relu'))
-    model.add(Dense(64, activation='relu'))
-    model.add(Dense(32, activation='relu'))
-    model.add(Dense(actions.shape[0], activation='softmax'))
-
-    model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['categorical_accuracy'])
-
-    if os.path.exists("./action.h5"):
-        model.load_weights('action.h5')
-
-        
+def model_creation(actions, X_train, y_train, tb_callback, X_test, y_test, sequence_length, epochs, train=False):
+    if os.path.exists("./model.h5") and train==False:
+        model = load_model('./model.h5')
+        model.summary()
+        yhat = model.predict(X_test)
+        ytrue = np.argmax(y_test, axis=1).tolist()
+        yhat = np.argmax(yhat, axis=1).tolist()
+        print(multilabel_confusion_matrix(ytrue, yhat))
+        print(accuracy_score(ytrue, yhat))
+    
     else:
+        model = Sequential()
+        model.add(LSTM(64, return_sequences=True, activation='relu', input_shape=(sequence_length,1662)))
+        model.add(LSTM(128, return_sequences=True, activation='relu'))
+        model.add(LSTM(64, return_sequences=False, activation='relu'))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dense(32, activation='relu'))
+        model.add(Dense(actions.shape[0], activation='softmax'))
+        model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['categorical_accuracy'])
         model.fit(X_train, y_train, epochs=epochs, callbacks=[tb_callback])
-        model.save('action.h5')
+        model.summary()
+        yhat = model.predict(X_test)
+        ytrue = np.argmax(y_test, axis=1).tolist()
+        yhat = np.argmax(yhat, axis=1).tolist()
+        print(multilabel_confusion_matrix(ytrue, yhat))
+        print(accuracy_score(ytrue, yhat))
 
-    model.summary()
-  
-    yhat = model.predict(X_test)
-
-    ytrue = np.argmax(y_test, axis=1).tolist()
-    yhat = np.argmax(yhat, axis=1).tolist()
-
-    print(multilabel_confusion_matrix(ytrue, yhat))
-
-    print(accuracy_score(ytrue, yhat))
+        save_model(model, 'model.h5')
+        converter = tensorflow.lite.TFLiteConverter.from_keras_model(model=model)
+        model_tflite = converter.convert()
+        open("Traductor_LSM.tflite","wb").write(model_tflite)
 
     return model
+
+def data_augmenter():
+    '''
+    Create a Sequential model composed of 2 layers
+    Returns:
+        tf.keras.Sequential
+    '''
+    
+    data_augmentation = tensorflow.keras.Sequential()
+    data_augmentation.add(RandomFlip('horizontal'))
+    data_augmentation.add(RandomRotation(0.2))
+    
+    
+    return data_augmentation
     
