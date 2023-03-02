@@ -106,8 +106,8 @@ train_data = np.array(train_data)
 labels = to_categorical(labels).astype(int)
 
 # Path to the keypoints with the date and time
-path_keypoints = "keypoints_{}".format(datetime.now())
-path_labels = "labels_{}".format(datetime.now())
+path_keypoints = "saved_data/keypoints_{}".format(datetime.now())
+path_labels = "saved_data/labels_{}".format(datetime.now())
 
 # Save the keypoints
 np.save(path_keypoints, train_data)
