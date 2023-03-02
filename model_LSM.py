@@ -18,12 +18,12 @@ parser = argparse.ArgumentParser(description='Enter the arguments')
 parser.add_argument('-e','--epochs', type=int, help='epochs for training')
 parser.add_argument('-ts','--test_size', type=float, help='test size')
 parser.add_argument('-tr','--train', type=int, help='retrain model')
-parser.add_argument('-m','--model', type=int, help='location of the pretrained model')
+parser.add_argument('-m','--model', type=str, help='location of the pretrained model')
 args = parser.parse_args()
 
 # Import the arrays of keypoints sequences and labels
-sequences = np.load("prueba_keypoints2.npy")
-labels = np.load("prueba_labels2.npy")
+sequences = np.load("../saved_data/keypoints_2023-03-02 11:16:19.974872.npy")
+labels = np.load("../saved_data/labels_2023-03-02 11:16:19.975028.npy")
 
 # Split the data into train and test dataset
 X_train, X_test, y_train, y_test = train_test_split(sequences, labels, test_size=args.test_size)

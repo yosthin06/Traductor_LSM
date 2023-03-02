@@ -4,14 +4,18 @@ Author: Yosthin Galindo
 Contact: yosthin.galindo@udem.edu
 """
 
+# Import standard libraries
 import cv2
 import numpy as np
 import os
 import mediapipe as mp
-import LSM_utils as utils
 import time
 from tensorflow.keras.utils import to_categorical
 from datetime import datetime
+import argparse
+
+# Import user-defined libraries
+import LSM_utils as utils
 
 # Initialize the MediaPipe Holistic model and drawing utils
 mp_holistic = mp.solutions.holistic # Holistic model
@@ -21,7 +25,11 @@ mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 label_map = {"A": 0,"B":1,"C":2,"D":3, 'None':4}
 
 # Define the path to your video folder
-video_folder = "../../../videos_cuadrados"
+# Input the arguments and parse them
+parser = argparse.ArgumentParser(description='Enter the arguments')
+parser.add_argument('-v','--videos', type=str, help='path to videos')
+args = parser.parse_args()
+video_folder = "{}".format(args.videos)
 
 # Define the sequence length
 seq_length = 30
@@ -72,6 +80,8 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
                     keypoints = utils.extract_keypoints(results)
                     keypoints_list.append(keypoints)
 
+                    cv2.imshow('OpenCV Feed', image)
+
                     # Break gracefully
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         break
@@ -106,8 +116,8 @@ train_data = np.array(train_data)
 labels = to_categorical(labels).astype(int)
 
 # Path to the keypoints with the date and time
-path_keypoints = "saved_data/keypoints_{}".format(datetime.now())
-path_labels = "saved_data/labels_{}".format(datetime.now())
+path_keypoints = "../saved_data/keypoints_{}".format(datetime.now())
+path_labels = "../saved_data/labels_{}".format(datetime.now())
 
 # Save the keypoints
 np.save(path_keypoints, train_data)

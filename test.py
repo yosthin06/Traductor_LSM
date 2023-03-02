@@ -8,12 +8,19 @@ Contact: yosthin.galindo@udem.edu
 import cv2
 import numpy as np
 import mediapipe as mp
+import argparse
+from tensorflow.keras.models import *
 
 # Import user-defined libraries
 import LSM_utils as utils
- 
+
+# Input the arguments and parse them
+parser = argparse.ArgumentParser(description='Enter the arguments')
+parser.add_argument('-m','--model', type=str, help='location of the pretrained model')
+args = parser.parse_args()
+
 # Load the pretrained model
-model = load_model('my_best_model_solo_manos.h5')
+model = load_model(args.model)
 model.summary()
 
 # Initialize the actions list
@@ -24,12 +31,12 @@ mp_holistic = mp.solutions.holistic # Holistic model
 mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 
 # Set the colors for the probabilities
-colors = [(245,117,16), (117,245,16), (16,117,245)]
+colors = [(245,117,16), (117,245,16), (16,117,245), (218, 247, 166), (255, 195, 0 )]
 
 # Initialize lists and variables
 sequence = []
 sentence = []
-threshold = 0.9
+threshold = 0.95
 predictions=[]
 
 # Start to capture the real-time feed from the camera
@@ -84,7 +91,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         cv2.imshow('OpenCV Feed', image)
 
         # Break gracefully
-        if cv2.waitKey(10) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
