@@ -8,7 +8,7 @@ import LSM_utils as utils
 
 actions = np.array(['A', 'B', 'C', 'D'])
 
-data_augmentation = utils.data_augmenter()
+#data_augmentation = utils.data_augmenter()
 
 if os.path.exists("../../Traductor_LSM/frames"):
     for action in actions: 

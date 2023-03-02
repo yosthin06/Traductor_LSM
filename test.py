@@ -7,22 +7,23 @@ import time
 import mediapipe as mp
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import *
 from tensorflow.keras.layers import LSTM, Dense
 from tensorflow.keras.callbacks import TensorBoard
 from sklearn.metrics import multilabel_confusion_matrix, accuracy_score
 from scipy import stats
 import LSM_utils as utils
-from model_LSM import model
+#from model_LSM import model
  
 
-
+model = load_model('./model.h5')
+model.summary()
 
 mp_holistic = mp.solutions.holistic # Holistic model
 mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 
 # Actions that we try to detect
-actions = np.array(['A', 'B', 'C', 'D'])
+actions = np.array(['A', 'None'])
 
 colors = [(245,117,16), (117,245,16), (16,117,245)]
 
@@ -30,16 +31,21 @@ colors = [(245,117,16), (117,245,16), (16,117,245)]
 sequence = []
 sentence = []
 predictions = []
-threshold = 0.4
+threshold = 0.7
 
 cap = cv2.VideoCapture(0)
+# Get the width and height of the video
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+print("height: {}, wudth:{}".format(height,width))
 # Set mediapipe model 
-with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+with mp_holistic.Holistic(min_detection_confidence=0.2, min_tracking_confidence=0.2) as holistic:
     while cap.isOpened():
 
         # Read feed
         ret, frame = cap.read()
 
+        #frame = cv2.resize(frame, (480, 640))
         # Make detections
         image, results = utils.mediapipe_detection(frame, holistic)
         #print(results)
@@ -49,7 +55,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         
         # 2. Prediction logic
         keypoints = utils.extract_keypoints(results)
-        #print("Keypoints: ".format(keypoints))
+        print("Keypoints: {}".format(keypoints))
         sequence.append(keypoints)
         #print("Sequence: {}".format(sequence))
         sequence = sequence[-30:]
@@ -74,7 +80,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
                 sentence = sentence[-5:]
 
             # Viz probabilities
-            #image = utils.prob_viz(res, actions, image, colors)
+            image = utils.prob_viz(res, actions, image, colors)
             
         cv2.rectangle(image, (0,0), (640, 40), (245, 117, 16), -1)
         cv2.putText(image, ' '.join(sentence), (3,30), 

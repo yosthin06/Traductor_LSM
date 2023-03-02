@@ -10,6 +10,12 @@ import numpy as np
 import os
 import mediapipe as mp
 import LSM_utils as utils
+import time
+
+
+# Load the preprocessed data from the numpy file
+train_data = np.load("train_data.npy")
+train_labels = np.load("labels_data.npy")
 
 mp_holistic = mp.solutions.holistic # Holistic model
 mp_drawing = mp.solutions.drawing_utils # Drawing utilities
@@ -22,7 +28,7 @@ colors = [(245,117,16), (117,245,16), (16,117,245)]
 DATA_PATH = os.path.join('MP_Data') 
 
 # Actions that we try to detect
-actions = np.array(['A', 'B', 'C', 'D'])
+actions = np.array(['A', 'B', 'C', 'D', 'None'])
 
 # Thirty videos worth of data
 no_sequences = 30
@@ -44,31 +50,35 @@ for action in actions:
 #Create a VideoCapture object and read from input file
 # Loop through actions
 
-for action in actions:
-    frames_videos=len(os.listdir("MP_Data/{}".format(action)))
-
-    # Set mediapipe model 
-    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+start = time.time()
+keypoints_list= []
+# Set mediapipe model 
+with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+    for action in actions:
+        frames_videos=len(os.listdir("MP_Data/{}".format(action)))
+        print("action:", action)
         
-        # NEW LOOP
-        
-            # Loop through sequences aka videos
-            for sequence in range(1, frames_videos+1):
-                # Loop through video length aka sequence length
-                for frame_num in range(start_folder, start_folder+sequence_length):
-                    
-                    path_video = "../frames/{}/{}{}.jpg".format(action,action,frame_num)
-                    cap = cv2.VideoCapture(path_video)
-
-                    # Read feed
+        # Loop through sequences aka videos
+        for sequence in range(1, frames_videos+1):
+            # Loop through video length aka sequence length
+            for frame_num in range(start_folder, start_folder+sequence_length):
+                
+                path_video = "../frames/{}/{}{}.jpg".format(action,action,frame_num)
+                cap = cv2.VideoCapture(path_video)
+                # Loop through each frame in the video
+                while True:
                     ret, frame = cap.read()
+                    if not ret:
+                        break
+        
+                    frame = cv2.resize(frame,(224,224))
                     # Make detections
                     image, results = utils.mediapipe_detection(frame, holistic)
 
                     # Draw landmarks
-                    utils.draw_styled_landmarks(image, results, mp_drawing, mp_holistic)
-                    
-                    # NEW Apply wait logic
+                    #utils.draw_styled_landmarks(image, results, mp_drawing, mp_holistic)
+                
+                    """# NEW Apply wait logic
                     if frame_num == start_folder: 
                         cv2.putText(image, 'STARTING COLLECTION', (120,200), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255, 0), 4, cv2.LINE_AA)
@@ -82,16 +92,21 @@ for action in actions:
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
                         # Show to screen
                         cv2.imshow('OpenCV Feed', image)
-                    
+                    """
                     # NEW Export keypoints
                     keypoints = utils.extract_keypoints(results)
-                    print("keypoints: {}".format(keypoints.shape))
-                    npy_path = os.path.join(DATA_PATH, action, str(sequence), str(frame_num-start_folder))
-                    np.save(npy_path, keypoints)
+                    #print("keypoints: {}".format(keypoints.shape))
+                    #npy_path = os.path.join(DATA_PATH, action, str(sequence), str(frame_num-start_folder))
+                    keypoints_list.append(keypoints)
+                    print(len(keypoints_list))
                     start_folder = frame_num+1 if frame_num >= (start_folder+sequence_length-1) else start_folder
                     # Break gracefully
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
-                start_folder = 0 if sequence==frames_videos else start_folder    
+                    #if cv2.waitKey(1) & 0xFF == ord('q'):
+                        #break
+            start_folder = 0 if sequence==frames_videos else start_folder    
+    
     cap.release()
     cv2.destroyAllWindows()
+
+np.save("keypoints.npy", keypoints)
+print("keypoint time: {}".format((time.time()-start)))
