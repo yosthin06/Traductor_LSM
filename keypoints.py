@@ -1,8 +1,7 @@
 """
-Description: Create the model for the Mexican Sign Language 
+Description: Extract keypoints for the model
 Author: Yosthin Galindo
 Contact: yosthin.galindo@udem.edu
-First created: Monday 24 january, 2022
 """
 
 import cv2

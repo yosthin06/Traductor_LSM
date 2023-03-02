@@ -2,7 +2,6 @@
 Description: Library for the functions of the Mexican Sign Language Translator
 Author: Yosthin Galindo
 Contact: yosthin.galindo@udem.edu
-First created: Monday 24 january, 2022
 """
 
 # Import standar libraries

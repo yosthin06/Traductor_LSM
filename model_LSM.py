@@ -2,7 +2,6 @@
 Description: Create the model for the Mexican Sign Language 
 Author: Yosthin Galindo
 Contact: yosthin.galindo@udem.edu
-First created: Monday 24 january, 2022
 """
 
 # Import standar libraries
