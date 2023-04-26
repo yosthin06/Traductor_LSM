@@ -19,10 +19,11 @@ import LSM_utils as utils
 
 # Initialize the MediaPipe Holistic model and drawing utils
 mp_holistic = mp.solutions.holistic # Holistic model
+#mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 
 # Define the label mapping
-label_map = {"A": 0,"B":1,"C":2,"D":3, 'None':4}
+#label_map = {"A": 0,"B":1,"C":2,"D":3, 'E':4,'F':5,''}
 
 # Define the path to your video folder
 # Input the arguments and parse them
@@ -42,14 +43,15 @@ labels = []
 start = time.time()
 
 # Set mediapipe model 
-with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+with mp_holistic.Holistic(model_complexity=0,min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
     
     # Loop through each subfolder in the video folder
     videos = os.listdir(video_folder)
     videos.sort()
+    label_map = {label:num for num, label in enumerate(videos)}
 
     for subfolder in videos:
-
+        print("subfolder: ", subfolder)
         subfolder_path = os.path.join(video_folder, subfolder)
 
         if os.path.isdir(subfolder_path):

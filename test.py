@@ -10,6 +10,7 @@ import numpy as np
 import mediapipe as mp
 import argparse
 from tensorflow.keras.models import *
+import os
 
 # Import user-defined libraries
 import LSM_utils as utils
@@ -20,11 +21,16 @@ parser.add_argument('-m','--model', type=str, help='location of the pretrained m
 args = parser.parse_args()
 
 # Load the pretrained model
-model = load_model(args.model)
+#model = load_model('../saved_data/{}'.format(args.model))
+model = load_model("../saved_data/{}".format(args.model))
 model.summary()
 
 # Initialize the actions list
-actions = np.array(['A','B','C','D','None'])
+#actions = np.array(['A','B','C','D','None'])
+video_folder = "../../../base_de_datos_3"
+videos = os.listdir(video_folder)
+videos.sort()
+
 
 # Initialise the MediaPipe model
 mp_holistic = mp.solutions.holistic # Holistic model
@@ -38,19 +44,28 @@ sequence = []
 sentence = []
 threshold = 0.95
 predictions=[]
-
+frames=[]
+i=0
 # Start to capture the real-time feed from the camera
 cap = cv2.VideoCapture(0)
+fps = cap.get(cv2.CAP_PROP_FPS)
+print("fps:", fps)
 # Set mediapipe model 
-with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+with mp_holistic.Holistic(model_complexity=2,min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
     while cap.isOpened():
 
         # Read feed
         ret, frame = cap.read()
-
+        if not ret:
+            break
+        frame_normal = np.copy(frame)
+        #frame = utils.resize_img(frame, 100, cap)
+        frames.append(frame)
+        print("len frames: ",len(frames))
+        i+=1
+        print("i: ",i)
         # Make detections
         image, results = utils.mediapipe_detection(frame, holistic)
-        print(results)
         
         # Draw landmarks
         utils.draw_styled_landmarks(image, results, mp_drawing, mp_holistic)
@@ -64,23 +79,24 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         if len(sequence) == 30:
             res = model.predict(np.expand_dims(sequence, axis=0))[0]
             predictions.append(np.argmax(res))
+            print(videos[np.argmax(res)],res[np.argmax(res)])
             
             
         #  Prediction logic
             if np.unique(predictions[-10:])[0]==np.argmax(res): 
                 if res[np.argmax(res)] > threshold: 
                     if len(sentence) > 0: 
-                        if actions[np.argmax(res)] != sentence[-1]:
-                            sentence.append(actions[np.argmax(res)])
+                        if videos[np.argmax(res)] != sentence[-1]:
+                            sentence.append(videos[np.argmax(res)])
                     else:
-                        sentence.append(actions[np.argmax(res)])
+                        sentence.append(videos[np.argmax(res)])
 
             # Condition to only show the last 5 predicted labels
             if len(sentence) > 5: 
                 sentence = sentence[-5:]
 
             # Visualize probabilities
-            image = utils.prob_viz(res, actions, image, colors)
+            image = utils.prob_viz(res, videos, image, colors)
 
         # Visualize the predicted label    
         cv2.rectangle(image, (0,0), (640, 40), (245, 117, 16), -1)
