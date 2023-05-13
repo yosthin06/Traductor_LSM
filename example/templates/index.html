@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask-SocketIO Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.0/socket.io.js" integrity="sha512-LfS+HIOpZ9mWZd8sHsOT4Ffg4E3/hxPLaLQlTJFGS6f/LZvFYXWJ0f0GwrNpl1Q2L/omhW6U8p6UoHi6U/1v9A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function() {
+            var socket = io.connect('http://' + document.domain + ':' + location.port);
+            socket.on('connect', function() {
+                socket.emit('my event', {data: 'I\'m connected!'});
+            });
+            socket.on('my response', function(data) {
+                $('#log').append('<p>Received: ' + data.data + '</p>');
+            });
+            $('form#emit').submit(function(event) {
+                socket.emit('my event', {data: $('#emit_data').val()});
+                return false;
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Flask-SocketIO Example</h1>
+    <form id="emit" method="POST" action="">
+        <input type="text" id="emit_data" name="emit_data" value="test">
+        <button type="submit">Emit</button>
+    </form>
+    <div id="log"></div>
+</body>
+</html>

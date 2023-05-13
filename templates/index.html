@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenCV Camera Feed</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+      
+      h1 {
+        text-align: center;
+        margin-top: 20px;
+      }
+      
+      form {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      
+      
+      img {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+        height: auto;
+      }
+      
+      @media screen and (max-width: 600px) {
+        h1 {
+          font-size: 24px;
+        }
+        
+      }
+    </style>
+  </head>
+  <body>
+    <h1>OpenCV Camera Feed</h1>
+    <img src="{{ url_for('video_feed') }}">
+  </body>
+</html>
+

@@ -1,0 +1,73 @@
+<MyScreenManager>:
+    Home:
+        name: 'home'
+    Hand:
+        name: 'hand'
+    Cam:
+        name: 'cam'
+
+<Home>:
+    FloatLayout:
+        orientation: 'vertical'
+        canvas.before:
+            Color:
+                rgba: 0, 1, 1, 0.75
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        Label:
+            text: 'Bienvenido'
+            color: 0, 0, 0, 1
+            pos_hint: {'center_x': 0.5, "center_y":0.71}
+        Label:
+            text: 'Primero tendras que selecionar la mano que usas cuando estes listo presiona el boton'
+            color: 0, 0, 0, 1
+            os_hint: {'center_x': 0.5, "center_y":0.7}
+        Button:
+            text: 'Empezar'
+            color: 1, 1, 1, 1
+            background_color: 0, 0, 0, 1
+            size_hint: .2, .1
+            pos_hint: {'center_x': 0.5, "center_y":0.1}
+            on_press:
+                app.root.current = 'hand'
+                root.manager.transition.direction = "left"
+
+<Hand>:
+    BoxLayout:
+        Button:
+            background_color: 0, 1, 1, 0.75
+            background_normal: '/home/yosthingc/Documents/PEF_LSM/github/Traductor_LSM/kivy-app-v1/kivy-app-v1/handLeft.png'
+            on_press:
+                app.root.current = 'cam'
+                root.manager.transition.direction = "left"
+                mano = 1
+        Button:
+            background_color: 0, 1, 1, 0.75
+            background_normal: '/home/yosthingc/Documents/PEF_LSM/github/Traductor_LSM/kivy-app-v1/kivy-app-v1/handRight.png'
+            on_press:
+                app.root.current = 'cam'
+                root.manager.transition.direction = "left"
+                mano = 0
+
+<Cam>:
+    FloatLayout:
+        orientation: 'vertical'
+        Camera:
+            id: cam
+            resolution: (640, 480)
+            allow_stretch: True
+            keep_ratio: True
+            play: True
+        Button:
+            text: 'Atras'
+            color: 1, 1, 1, 1
+            background_color: 0, 0, 0, 1
+            size_hint: .2, .1
+            pos_hint: {'center_x': 0.15, "center_y":0.1}
+            on_press:
+                app.root.current = 'hand'
+                root.manager.transition.direction = "right" 
+        Label:
+            text: 'This is a label'
+            pos_hint: {'center_x': 0.12,  "center_y":0.95}
