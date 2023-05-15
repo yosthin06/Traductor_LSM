@@ -62,21 +62,22 @@ def gen_frames():
                 # Condition to predict only when the chosen hand is detected
                 if all(keypoints[0][30:72])!=0:
                     
-                    # Condition to predict only when 1 frames has passed        
+                    # Predict the gesture and store it in a list       
                     res = model.predict(np.expand_dims(keypoints, axis=0))[0]
                     predictions.append(np.argmax(res))
-                    
-                    #  Prediction logic
-                    if np.unique(predictions[-5:])[0]==np.argmax(res): 
-                        if res[np.argmax(res)] > threshold: 
-                            
-                            sentence.append(labels[np.argmax(res)])
+                
+                    if len(predictions)%3==0:
+                        #  Prediction logic
+                        if np.unique(predictions[-3:])[0]==np.argmax(res): 
+                            if res[np.argmax(res)] > threshold: 
+                                
+                                sentence.append(labels[np.argmax(res)])
+                                
                         
 
                     # Condition to only show the last 5 predicted labels
                     if len(sentence) > 5: 
                         sentence = sentence[-5:]
-
                 # Visualize the predicted label    
                 cv2.rectangle(frame_normal, (0,0), (640, 40), (245, 117, 16), -1)
                 cv2.putText(frame_normal, ' '.join(sentence), (3,30), 
@@ -106,9 +107,7 @@ def tasks():
             mano=0
         elif  request.form.get('izquierda') == 'Izquierda':
             mano=1 
-        
-                          
-                 
+     
     elif request.method=='GET':
         return render_template('index.html')
     return render_template('index.html')
