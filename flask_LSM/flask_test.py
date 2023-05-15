@@ -2,16 +2,14 @@
 import cv2
 import numpy as np
 import mediapipe as mp
-import argparse
-from tensorflow.keras.models import *
-import os
+from tensorflow.keras.models import load_model
 import pandas as pd
 from flask import Flask, render_template, Response, request
 
 # Import user-defined libraries
 import LSM_utils as utils
 
-app = Flask(__name__,template_folder='./templates'  )
+app = Flask(__name__,template_folder='./templates')
 
 
 mp_holistic = mp.solutions.holistic # Holistic model
@@ -20,32 +18,27 @@ mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 global switch, mano,camera
 mano=0
 switch=1
-print("init", switch)
-# Load the pretrained model
-model = load_model("/home/yosthingc/Documents/PEF_LSM/github/saved_data/my_best_model_2023-04-19 14:05:00.877168.h5")
 
-csv_path = "/home/yosthingc/Documents/PEF_LSM/github/LSM_data_completa_2_con_mov.csv"
+# Load the pretrained model
+model = load_model("../data_folder/final_version.h5")
+
+csv_path = "../data_folder/LSM_database.csv"
 
 # Read CSV file for Training the model using Pandas
 df = pd.read_csv(csv_path, header=0)
-#df=df.sort_values(by=["Sign"]).reset_index(drop=True)
-#print(df)
+
 labels = np.unique(df["Sign"])
-print(labels)
 
 
 def gen_frames():
     
-    sequence = []
     sentence = []
     threshold = 0.90
     predictions=[]
-    frames=[]
-    i=0
     width=100
     
-    camera = cv2.VideoCapture('http://172.32.128.38:8080/video')
-    with mp_holistic.Holistic(model_complexity=0,min_detection_confidence=0.3, min_tracking_confidence=0.3) as holistic:
+    camera = cv2.VideoCapture(0)
+    with mp_holistic.Holistic(model_complexity=1,min_detection_confidence=0.3, min_tracking_confidence=0.3) as holistic:
 
         while True:
             success, frame = camera.read()
@@ -63,35 +56,31 @@ def gen_frames():
                 utils.draw_styled_landmarks(frame, results, mp_drawing, mp_holistic)
                 # Prediction logic
                 keypoints = utils.extract_keypoints(results)
-                #print("before:\n{}".format(keypoints))
-                keypoints = np.array(utils.scale_points(keypoints)).flatten()
-                sequence.append(keypoints)
-                sequence = sequence[-1:]
-
-                # Condition to predict only when 30 frames has passed        
-                #if len(sequence) == 30:
-                res = model.predict(np.expand_dims(sequence, axis=0))[0]
-                predictions.append(np.argmax(res))
-                #print(np.argmax(res))
-                #print(labels[np.argmax(res)],res[np.argmax(res)])
-                #  Prediction logic
-                if np.unique(predictions[-1:])[0]==np.argmax(res): 
-                    if res[np.argmax(res)] > threshold: 
-                        if len(sentence) > 0: 
-                            if labels[np.argmax(res)] != sentence[-1]:
-                                sentence.append(labels[np.argmax(res)])
-                        else:
+                
+                keypoints = np.array(utils.scale_points(keypoints)).flatten().reshape((1,72))
+                
+                # Condition to predict only when the chosen hand is detected
+                if all(keypoints[0][30:72])!=0:
+                    
+                    # Condition to predict only when 1 frames has passed        
+                    res = model.predict(np.expand_dims(keypoints, axis=0))[0]
+                    predictions.append(np.argmax(res))
+                    
+                    #  Prediction logic
+                    if np.unique(predictions[-5:])[0]==np.argmax(res): 
+                        if res[np.argmax(res)] > threshold: 
+                            
                             sentence.append(labels[np.argmax(res)])
+                        
 
-                # Condition to only show the last 5 predicted labels
-                if len(sentence) > 5: 
-                    sentence = sentence[-5:]
+                    # Condition to only show the last 5 predicted labels
+                    if len(sentence) > 5: 
+                        sentence = sentence[-5:]
 
                 # Visualize the predicted label    
                 cv2.rectangle(frame_normal, (0,0), (640, 40), (245, 117, 16), -1)
                 cv2.putText(frame_normal, ' '.join(sentence), (3,30), 
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-                #print("after:\n{}".format(keypoints))
                 ret, buffer = cv2.imencode('.jpg', frame_normal)
                 
                 frame_normal = buffer.tobytes()

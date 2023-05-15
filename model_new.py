@@ -20,9 +20,9 @@ mp_holistic = mp.solutions.holistic # Holistic model
 mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 
 # Define the path to your video folder
-video_folder = "/home/yosthingc/Documents/VideosBaseDatosCompletaFinal/VideoBaseDatos2/Abecedario_Faltante"
+#video_folder = "/home/yosthingc/Documents/VideosBaseDatosCompletaFinal/VideoBaseDatos2/Abecedario_Faltante"
 
-csv_path = "/home/yosthingc/Documents/PEF_LSM/github/LSM_data_completa_2_con_mov.csv"
+csv_path = "data_folder/LSM_database.csv"
 
 # Read CSV file for Training the model using Pandas
 df = pd.read_csv(csv_path, header=0)
@@ -53,7 +53,7 @@ model.add(Dense(32, activation='relu'))
 model.add(Dense(y_train.shape[1], activation='softmax'))
 model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['categorical_accuracy'])
 model.summary()
-filepath = '../saved_data/my_best_model_{}.h5'.format(datetime.now())
+filepath = 'data_folder/final_version.h5'
 checkpoint = ModelCheckpoint(filepath=filepath, 
                      monitor='loss',
                      verbose=1, 
