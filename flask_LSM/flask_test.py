@@ -57,15 +57,15 @@ def gen_frames():
                 # Prediction logic
                 keypoints = utils.extract_keypoints(results)
                 
-                keypoints = np.array(utils.scale_points(keypoints)).flatten().reshape((1,72))
-                
                 # Condition to predict only when the chosen hand is detected
-                if all(keypoints[0][30:72])!=0:
-                    
+                if all(keypoints[30:72])!=0:
+                    keypoints = np.array(utils.scale_points(keypoints)).flatten().reshape((1,72))
+                
+                
                     # Predict the gesture and store it in a list       
                     res = model.predict(np.expand_dims(keypoints, axis=0))[0]
                     predictions.append(np.argmax(res))
-                
+                    print(np.argmax(res))
                     if len(predictions)%3==0:
                         #  Prediction logic
                         if np.unique(predictions[-3:])[0]==np.argmax(res): 
