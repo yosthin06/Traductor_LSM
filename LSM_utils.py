@@ -86,7 +86,7 @@ def extract_keypoints(results):
             count += 1
             if count == 15:
                 break
-    else: np.zeros(15*2)
+    else: pose=np.zeros(15*2)
     
     lh = np.array([[res.x, res.y] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*2)
     
