@@ -2,7 +2,8 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenCV Camera Feed</title>
+    <title>Prototipo Traductor LSM</title>
+    <link rel="shortcut icon" href="{{ url_for('static',filename = 'udem-logotipo.jpg')}}">
     <style>
       body {
         margin: 0;
@@ -56,10 +57,11 @@
     </style>
   </head>
   <body>
-    <h1>OpenCV Camera Feed</h1>
+    <h1>Prototipo Traductor LSM</h1>
     <form method="post" action="{{ url_for('tasks') }}">
       <input type="submit" value="Derecha" name="derecha"/>
       <input type="submit" value="Izquierda" name="izquierda" />
+      <input type="submit" value="Borrar" name="borrar" />
     </form>
     <img src="{{ url_for('video_feed') }}">
   </body>

@@ -12,6 +12,7 @@ from tensorflow.keras.models import load_model
 import pandas as pd
 from flask import Flask, render_template, Response, request
 import sys
+import tensorflow as tf
  
 # Inserting the path to the previous folder to import utils
 sys.path.insert(0, '..')
@@ -28,6 +29,9 @@ mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 
 # Initialize the dominant hand of the user as right hand
 mano=0
+
+# Set the device to use CPU for m1 Macs
+tf.config.set_visible_devices([], 'GPU')
 
 # Load the pretrained model
 model = load_model("../data_folder/LSM_model.h5")
@@ -132,6 +136,8 @@ def tasks():
         # mano will be 1 indicating that is the left hand
         elif  request.form.get('izquierda') == 'Izquierda':
             mano=1 
+        if request.form.get('borrar') == 'Borrar':
+            sentence = []       
      
     elif request.method=='GET':
         return render_template('index.html')
