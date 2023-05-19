@@ -1,5 +1,5 @@
 # Traductor_LSM
-Introducción
+# Introducción
 
 Este es un prototipo de traductor de Lengua de Señas Mexicana que corre en una página web para el sector médico y la gente con discapacidad auditiva pueda decir cual es su malestar.
 
