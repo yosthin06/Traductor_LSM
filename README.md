@@ -1,9 +1,9 @@
-## Traductor_LSM
-# Introducción
+# Traductor_LSM
+## Introducción
 
 Este es un prototipo de traductor de Lengua de Señas Mexicana que corre en una página web para el sector médico y la gente con discapacidad auditiva pueda decir cual es su malestar.
 
-Instalacion
+## Instalacion
 
 Para hacer uso de este código primero tienes que clonar el repositorio en tu ordenador con el siguiente comando:
 
@@ -19,7 +19,7 @@ Copia la liga que te aparece en la línea de comandos, pegala en tu navegador we
 
 Para instalacion de tensorflow para macbook m1 es diferente para que se revise los comandos necesarios.
 
-Carpetas
+## Carpetas
 
 Se tienen las siguiente carpetas
 
@@ -29,7 +29,7 @@ Se tienen las siguiente carpetas
 Dentro de "static" se tiene el logo de la Universidad de Monterrey o se pueden guardar archivos que no tienen cambio.
 
 Dentro de "templates" esta el archivo html donde esta la estructura de como se ve la pagina web.
-Base de datos
+## Base de datos
 
 Para tener acceso a la base de datos se tiene que solicitar y llenar un formato, el cual, se asegura que se tendra un uso academico y se puede solicitar en el siguiente correo
 
