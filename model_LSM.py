@@ -7,8 +7,10 @@ Contact: yosthin.galindo@udem.edu
 # Import standar libraries
 import numpy as np
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.utils import to_categorical
 import argparse
 import time
+import pandas as pd
 
 # Import user-defined libraries
 import LSM_utils as utils
@@ -21,19 +23,35 @@ parser.add_argument('-tr','--train', type=int, help='retrain model')
 parser.add_argument('-m','--model', type=str, help='location of the pretrained model')
 args = parser.parse_args()
 
-# Import the arrays of keypoints sequences and labels
-labels = np.load("../saved_data/labels_2023-03-13 11:50:04.132165.npy")
-sequences = np.load("../saved_data/keypoints_2023-03-13 11:50:04.132003.npy")
-print("sequences: {}, labels: {}".format(sequences.shape,labels.shape))
+# Initialize the csv file path
+csv_path = "data_folder/LSM_database.csv"
+
+# Read CSV file for Training the model using Pandas
+df = pd.read_csv(csv_path, header=0)
+
+# Obtain the labels of the signs
+labels = np.unique(df["Sign"])
+df["Sign"] = pd.Categorical(df["Sign"])
+df["Sign"] = df.Sign.cat.codes
+
+# Copy Label and Feature for training
+y = df.pop("Sign")
+x = df.copy()
+
+# Copied Features turn to Array by using NumPy
+x = np.array(x)
+x = np.reshape(x, (x.shape[0],1, x.shape[1]))
+num_classes=len(labels)
+y = to_categorical(y, num_classes)
 
 # Split the data into train and test dataset
-X_train, X_test, y_train, y_test = train_test_split(sequences, labels, test_size=args.test_size, stratify=labels)
-print("X_train: {}, X_test: {}, y_train: {}, y_test: {}".format(X_train.shape,X_test.shape, y_train.shape,y_test.shape))
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2,stratify=y)
+
 # Start the timer to get how long it takes to create the model
 start = time.time()
 
 # Create the model 
-model = utils.model_creation(labels.shape[1], sequences, labels,X_test, y_test, epochs=args.epochs, train=args.train, pretrained_model=args.model)
+model = utils.model_creation(x_train, y_train,x_test, y_test, epochs=args.epochs, train=args.train, pretrained_model=args.model)
 
 # Print the time it takes to create the model
 print("model time: {}".format(time.time()-start))

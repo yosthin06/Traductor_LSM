@@ -1,22 +1,25 @@
 """
 Description: Library for the functions of the Mexican Sign Language Translator
-Author: Yosthin Galindo
-Contact: yosthin.galindo@udem.edu
+Author: Yosthin Galindo, Santiago Garza
+Contact: yosthin.galindo@udem.edu, santiago.garzam@udem.edu
 """
 
-# Import standar libraries
+# Import standard libraries
 import cv2
 import numpy as np
-import tensorflow
 import os
 import csv
+import tensorflow as tf
 from tensorflow.keras.models import *
-from tensorflow.keras.layers import LSTM, Dense, GRU
+from tensorflow.keras.layers import Dense, GRU
 from sklearn.metrics import multilabel_confusion_matrix, accuracy_score
 from keras.callbacks import ModelCheckpoint
 from datetime import datetime
 
 def mediapipe_detection(image, model):
+    """
+    Utilize the MediaPipe model selected to detect the keypoints
+    """
     image.flags.writeable = False                  # Image is no longer writeable
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # COLOR CONVERSION BGR 2 RGB
     results = model.process(image)                 # Make prediction
@@ -25,6 +28,9 @@ def mediapipe_detection(image, model):
     return image, results
 
 def draw_styled_landmarks(image, results, mp_drawing, mp_holistic):
+    """
+    Draw the keypoints detected by MediaPipe in the image
+    """
     #Draw pose connections
     mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
                              mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius=4), 
@@ -35,49 +41,13 @@ def draw_styled_landmarks(image, results, mp_drawing, mp_holistic):
                              mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4), 
                              mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2)
                              ) 
-    """
-    if results.multi_hand_landmarks:
-        for hand_landmarks in results.multi_hand_landmarks:
-            # Draw left hand connections
-            mp_drawing.draw_landmarks(image, hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
-                                    mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4), 
-                                    mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2)
-                                    ) 
-    """
     
-def draw_landmarks(image, results, mp_drawing, mp_holistic):
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS) # Draw pose connections
-    mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS) # Draw left hand connections
-    #mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS) # Draw right hand connections
 
-"""def draw_styled_landmarks(image, results, mp_drawing, mp_holistic):
-    #Draw pose connections
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
-                             mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius=4), 
-                             mp_drawing.DrawingSpec(color=(80,44,121), thickness=2, circle_radius=2)
-                             )
-    # Draw left hand connections
-    mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
-                             mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4), 
-                             mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2)
-                             ) 
-    # Draw right hand connections  
-    mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
-                             mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=4), 
-                             mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2)
-                             ) """
-
-"""def extract_keypoints(results):
-    pose = np.array([[res.x, res.y, res.z] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*3)
-    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)
-    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*3)
-    
-    return np.concatenate([pose,lh, rh])"""
-
-##Actualizado
 def extract_keypoints(results):
-    
-    ## Detectar puntos cuerpo ( pose)
+    """
+    Extract the desired keypoints and store them in an array
+    """
+    # Detect pose keypoints from 0 to 14
     count = 0
     pose=np.array([])
     if results.pose_landmarks:
@@ -87,91 +57,47 @@ def extract_keypoints(results):
             if count == 15:
                 break
     else: pose=np.zeros(15*2)
-    
+    # Detect left hand keypoints
     lh = np.array([[res.x, res.y] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*2)
-    
-
-    #rh = np.array([[res.x, res.y] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*2)
+    # Return the two arrays of keypoints concatenated in one array
     return np.concatenate([pose, lh])
-    #lh=np.array([[landmark.x, landmark.y]  for res in results.multi_hand_landmarks for idx, landmark in enumerate(res.landmark)]).flatten() if results.multi_hand_landmarks else np.zeros(21*2)
-    
-    #if all(lh)!=0:
-        
-        #return np.concatenate([lh])
 
-def prob_viz(res, actions, input_frame, colors):
-    output_frame = input_frame.copy()
-    cv2.putText(output_frame, actions[np.argmax(res)], (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 2, cv2.LINE_AA)
-    cv2.putText(output_frame, str(round(res[np.argmax(res)]*100,2)), (0, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 2, cv2.LINE_AA)
-        
-    return output_frame
-
-"""
-Pose y left hand
-def column_names(mp_holistic):
-    # Crear Dataframe con los nombres de las columnas
+def column_names(model):
+    """
+    Create the list of the column names of the csv files
+    """
+    # Create Dataframe with the column names
     coords = ["x", "y"]
 
-    ## Lista de nombres de columnas
+    ## List of of column names
     list_column_names = []
-    ## PALABRA
+    # Append the sign letter or word
     list_column_names.append("Sign")
-    
-    ## CUERPO
+
+    # Pose 
     count=0
-    # Codigo para acceder a los puntos de referencia
-    for landmark in mp_holistic.PoseLandmark:
+    # Accesing to the names of the pose keypoints through 0 to 14
+    for landmark in model.PoseLandmark:
         for coord in coords:
             list_column_names.append(str(landmark) + "_" + str(count) + "_" + coord)
         count+=1
         if count == 15:
             break
-    ## MANO IZQUIERDA
+
+    # Left Hand
     count=0
-    # Codigo para acceder a los puntos de referencia
-    for landmark in mp_holistic.HandLandmark:
+    # Accesing to the names of the left hand keypoints 
+    for landmark in model.HandLandmark:
         for coord in coords:
             list_column_names.append("L"+str(landmark) + "_" + str(count) + "_" + coord)
         count+=1   
-    ## MANO DERECHA
-    count=0
-    # Codigo para acceder a los puntos de referencia
-    for landmark in mp_holistic.HandLandmark:
-        for coord in coords:
-            list_column_names.append("R"+str(landmark) + "_" + str(count) + "_" + coord)
-        count+=1
-        
-    return list_column_names
-    """
-
-def column_names(mp_hands):
-    # Crear Dataframe con los nombres de las columnas
-    coords = ["x", "y"]
-
-    ## Lista de nombres de columnas
-    list_column_names = []
-    ## PALABRA
-    list_column_names.append("Sign")
     
-    
-    ## MANO IZQUIERDA
-    count=0
-    # Codigo para acceder a los puntos de referencia
-    for landmark in mp_hands.HandLandmark:
-        for coord in coords:
-            list_column_names.append("L"+str(landmark) + "_" + str(count) + "_" + coord)
-        count+=1   
-    ## MANO DERECHA
-    """count=0
-    # Codigo para acceder a los puntos de referencia
-    for landmark in mp_hands.HandLandmark:
-        for coord in coords:
-            list_column_names.append("R"+str(landmark) + "_" + str(count) + "_" + coord)
-        count+=1"""
-        
     return list_column_names
 
 def resize_img(img,cap,new_width):
+    """
+    Resize the image to the desired size considering the aspect ratio
+    """
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     ratio = height/width
@@ -181,33 +107,26 @@ def resize_img(img,cap,new_width):
 
 #Function to create CSV file or add dataset to the existed CSV file
 def toCSV(filecsv,keypoints, mp_holistic):
-    
+    """
+    Save the keypoints in a csv file
+    """
     if os.path.isfile(filecsv):
-        #print("File exist thus shall write append to the file")
         with open(filecsv, 'a+', newline='') as file:
             writer = csv.writer(file)
-            #df = pd.read_csv(filecsv)
-            #list_column_names = list(df.columns)
-            #keypoint =dict(zip(list_column_names, keypoints))
             writer.writerow(keypoints)
-            #df = pd.read_csv(filecsv)
-            #df.loc[len(df)] = keypoint
-
 
     else:
-        #print("File not exist thus shall create new file as", filecsv)
         with open(filecsv, 'w', newline='') as file:
             # Create a writer object from csv module
             writer = csv.writer(file)
             list_column_names = column_names(mp_holistic)
             writer.writerow(list_column_names)
-            #keypoint =dict(zip(list_column_names, keypoints))
             writer.writerow(keypoints)
-            #df = pd.DataFrame(columns = [list_column_names])
-            #df.loc[len(df)] = keypoint
-    #df.to_csv(filecsv, index= False)
 
 def scale_points(x):
+    """
+    Scale the keypoints respecting the minimum and maximum keypoint detected
+    """
     x = x.astype("float")
     x_points = x[0::2]
     y_points = x[1::2]
@@ -221,7 +140,10 @@ def scale_points(x):
     keypoints_y=np.divide(np.subtract(y_points,y_min),height)   
     return list(zip(keypoints_x, keypoints_y))
 
-def model_creation(num_labels, X_train, y_train, X_test, y_test, epochs, train, **pretrained_model):
+def model_creation(X_train, y_train, X_test, y_test, epochs, train, **pretrained_model):
+    """
+    Create or load the model for the LSM translation
+    """
     if train==0:
         model = load_model(pretrained_model)
         model.summary()
@@ -234,21 +156,23 @@ def model_creation(num_labels, X_train, y_train, X_test, y_test, epochs, train, 
     else:
         
         model = Sequential()
-        model.add(GRU(64, return_sequences=True, activation='relu', input_shape=(30,126)))
+        model.add(GRU(64, return_sequences=True, activation='relu', input_shape=(1,72)))
         model.add(GRU(128, return_sequences=True, activation='relu'))
         model.add(GRU(64, return_sequences=False, activation='relu'))
         model.add(Dense(64, activation='relu'))
         model.add(Dense(32, activation='relu'))
-        model.add(Dense(num_labels, activation='softmax'))
+        model.add(Dense(y_train.shape[1], activation='softmax'))
         model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['categorical_accuracy'])
         model.summary()
-        filepath = '../saved_data/my_best_model_{}.h5'.format(datetime.now())
+        filepath = 'data_folder/final_version2.h5'
         checkpoint = ModelCheckpoint(filepath=filepath, 
-                             monitor='loss',
-                             verbose=1, 
-                             save_best_only=True,
-                             mode='min')
-        model.fit(X_train, y_train, epochs=epochs, callbacks=checkpoint)
+                            monitor='loss',
+                            verbose=1, 
+                            save_best_only=True,
+                            mode='min')
+        callback = tf.keras.callbacks.EarlyStopping(monitor='loss',min_delta=0.05,verbose=1, patience=10)
+
+        model.fit(X_train, y_train, epochs=epochs, callbacks=[callback,checkpoint],validation_data=(X_test, y_test))
         
         yhat = model.predict(X_test)
         ytrue = np.argmax(y_test, axis=1).tolist()
@@ -265,18 +189,4 @@ def model_creation(num_labels, X_train, y_train, X_test, y_test, epochs, train, 
 
 
     return model
-
-def data_augmenter():
-    '''
-    Create a Sequential model composed of 2 layers
-    Returns:
-        tf.keras.Sequential
-    '''
-    
-    data_augmentation = tensorflow.keras.Sequential()
-    data_augmentation.add(RandomFlip('horizontal'))
-    data_augmentation.add(RandomRotation(0.2))
-    
-    
-    return data_augmentation
 
