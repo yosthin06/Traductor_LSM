@@ -29,7 +29,7 @@ args = parser.parse_args()
 video_folder = args.folder
 
 # Path to the csv file
-csv_path = "data_folder/LSM_database2.csv"
+csv_path = "data_folder/LSM_database.csv"
 
 # Set mediapipe model 
 with mp_holistic.Holistic(model_complexity=1,min_detection_confidence=0.3, min_tracking_confidence=0.3) as holistic:

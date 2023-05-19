@@ -30,7 +30,7 @@ mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 mano=0
 
 # Load the pretrained model
-model = load_model("../data_folder/final_version.h5")
+model = load_model("../data_folder/LSM_model.h5")
 
 # Path to the csv file
 csv_path = "../data_folder/LSM_database.csv"
